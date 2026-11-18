@@ -1,0 +1,357 @@
+\documentclass[10pt,journal]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{microtype}
+\usepackage{tabularx}
+
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\theequation}{S\arabic{equation}}
+
+\begin{document}
+
+\title{Supplementary Material: Contract Resale Flexibility Under Market and Regulatory Constraints in the Brazilian Electricity Market}
+
+\author{Marcelo~Albuquerque~Heluy,%
+        ~Fernando~Bezerra~Chagas,%
+        ~Jo\~ao~Guilherme~Raposo~Lobato,%
+        ~and~Francisco~Glaubos~Nunes~Cl\'imaco}
+
+\markboth{Supplementary Material: IEEE Transactions on Energy Markets, Policy and Regulation}%
+{Heluy \MakeLowercase{\textit{et al.}}: Supplementary Material}
+
+\maketitle
+
+This supplementary document provides (i) the complete model nomenclature, (ii) extended in-sample ($N = 4,096$) and Kaut--Wallace out-of-sample tree stability diagnostics (including paired resale differences and joint vs.\ SE-only branching dispersion), (iii) complete seven-point efficient frontier, 10-seed paired statistics, regulatory backing-regime comparisons, and LP dimension benchmarks, and (iv) detailed tabular results for retail tariff sensitivity, empirical BBCE 2023 liquidity depth, hourly load modulation, monthly Financial Transmission Right (FTR) proof-of-concept, and full forward risk-premium term-structure comparisons under the baseline tariff $P^{\text{cli}} = \text{R\$}\,160.00/\text{MWh}$.
+
+\section{Complete Model Nomenclature}
+\label{sec:supp_nomen}
+
+Table~\ref{tab:supp_nomenclature} lists all sets, indices, parameters, and decision variables used in the multistage stochastic linear program (MSLP), its regulatory backing constraints, and its two structural extensions.
+
+\begin{table}[htbp]
+\centering
+\caption{Complete Model Nomenclature.}
+\label{tab:supp_nomenclature}
+\scriptsize
+\begin{tabularx}{\columnwidth}{lX}
+\toprule
+\multicolumn{2}{l}{\textbf{Sets and Indices}} \\
+$t \in \mathcal{T}$ & Decision stages (quarters), $\mathcal{T} = \{0, 1, \dots, T-1\}$ \\
+$\nu \in \mathcal{N}$ & Nodes in the scenario tree, with root $\nu = 0$ \\
+$a(\nu)$ & Unique parent node of $\nu$ ($q_{a(0)} \equiv 0$ unless inherited) \\
+$\mathcal{P}(\nu)$ & Ancestor path from root $\nu=0$ to node $\nu$ inclusive \\
+$\mathcal{L} \subset \mathcal{N}$ & Set of terminal leaf nodes (scenarios) \\
+$\mathcal{M}(\nu)$ & Delivery months governed by node $\nu$ \\
+$s \in \mathcal{S}$ & Submarkets, $\mathcal{S} = \{\text{SE}, \text{NE}\}$ \\
+$k \in \mathcal{K}$ & Forward product tenors, $\mathcal{K} = \{M, T, S\}$ \\
+$p \in \mathcal{P}_k(\nu)$ & Eligible delivery blocks of product $k$ tradable at node $\nu$ \\
+$\mathcal{B}_{k,p}$ & Calendar months covered by block $(k,p)$ ($|\mathcal{B}_{M,p}|=1$, $|\mathcal{B}_{T,p}|=3$, $|\mathcal{B}_{S,p}|=6$) \\
+$m, n$ & Calendar delivery months, $m, n \in \{0, \dots, 23\}$ \\
+\midrule
+\multicolumn{2}{l}{\textbf{Parameters}} \\
+$\pi_\nu$ & Unconditional probability of node $\nu$, $\sum_{\ell \in \mathcal{L}} \pi_\ell = 1$ \\
+$h_m, H_{k,p}$ & Hours in month $m$, and block hours $H_{k,p} = \sum_{n \in \mathcal{B}_{k,p}} h_n$ \\
+$D_{\nu,s,m}$ & Retail client demand at node $\nu$, submarket $s$, month $m$ (MWmed) \\
+$E_{\nu,s,m}$ & Physical self-generation output ($E_{\nu,s,m} = 0$ in baseline) \\
+$P^{\text{cli}}$ & Retail sales tariff contracted with clients ($\text{R\$}\,160.00/\text{MWh}$ baseline) \\
+$\tau_{\text{reg}}$ & Regulatory systemic charge (ESS/EER) ($\text{R\$}\,15.00/\text{MWh}$ baseline) \\
+$\pi_{\text{VR}}$ & Statutory 12-month backing-deficit penalty (2025 CCEE VR = $\text{R\$}\,231.47/\text{MWh}$) \\
+$\underline{c}$ & Prudential minimum forward coverage floor ($\underline{c} \in \{0, 1.0\}$) \\
+$\sigma, \eta_k$ & One-way forward half-spread ($\sigma = 1.0\%$ base) and tenor multiplier ($\eta_M=1.0, \eta_T=0.8, \eta_S=0.6$) \\
+$\psi_{\nu,k,p}$ & Forward risk premium (constant $\psi_0$ or decaying $\psi_0 \tau_{\nu,k,p}$) \\
+$P^+_{\nu,s,k,p}, P^-_{\nu,s,k,p}$ & Node-conditional purchase and resale prices for block $(k,p)$ (R\$/MWh) \\
+$\text{PLD}_{\nu,s,m}$ & Monthly average spot PLD at node $\nu$, submarket $s$, month $m$ \\
+$\lambda, \beta$ & Risk-aversion weight ($\lambda \in [0, 1)$) and CVaR confidence ($\beta = 0.95$) \\
+$\gamma_{s,m}$ & Intra-month hourly load-capture ratio ($\gamma_{s,m}=1$ for flat load) \\
+$c_{\text{FTR}}$ & Optional transaction fee on monthly FTRs (R\$/MWh) \\
+\midrule
+\multicolumn{2}{l}{\textbf{Decision Variables}} \\
+$x^+_{\nu,s,k,p}, x^-_{\nu,s,k,p}$ & Forward volume purchased and resold at node $\nu$ for block $(k,p)$ (MWmed) \\
+$q_{\nu,s,n}$ & Cumulative net forward position for month $n$ (MWmed) \\
+$q^{\text{cross}}_{\nu,n}, q^{\text{FTR}}_{\nu,n}$ & Cross-submarket $\text{NE}\!\to\!\text{SE}$ position and monthly FTR volume (MWmed) \\
+$y^+_{\nu,s,m}, y^-_{\nu,s,m}$ & Physical spot surplus and deficit in month $m$ (MWmed) \\
+$d^{\text{las}}_{\nu,m}$ & Trailing 12-month backing deficit slack at node $\nu$, month $m$ (MWmed) \\
+$C_\nu, R_\ell$ & Net cash flow at node $\nu$ and cumulative profit at leaf $\ell$ (R\$) \\
+$\alpha, u_\ell$ & VaR threshold and Rockafellar--Uryasev shortfall slacks (R\$) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Extended Scenario Tree Stability Diagnostics}
+\label{sec:supp_stability}
+
+\subsection{Pool-Size Scaling ($N = 1,024$ vs.\ $N = 4,096$)}
+Table~\ref{tab:supp_pool_scaling} compares cross-seed in-sample stability across 10 independent seeds at $\lambda = 0.50$ under the baseline tariff $P^{\text{cli}} = \text{R\$}\,160.00/\text{MWh}$ and joint PCA branching over $(\text{PLD}_{\text{SE}}, \text{PLD}_{\text{NE}}, \theta)$ for pre-bisection Monte Carlo pool sizes $N = 1,024$ and $N = 4,096$. Increasing $N$ fourfold reduces the cross-seed standard deviation from $\text{R\$}\,2.60\text{M}$ to $\text{R\$}\,1.51\text{M}$ (and CV from $10.83\%$ to $6.28\%$ at 128 leaves), while maintaining mean HiGHS 1.16 solve times near $0.66\text{ s}$.
+
+\begin{table}[htbp]
+\centering
+\caption{In-Sample Tree Stability Across 10 Seeds ($\lambda = 0.50$, $P^{\text{cli}} = \text{R\$}\,160/\text{MWh}$, $N = 1,024$ vs.\ $N = 4,096$).}
+\label{tab:supp_pool_scaling}
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{cccccc}
+\toprule
+Pool Size & Leaves & Mean FO & SD & CV & Mean Solve \\
+$N$ & $|\mathcal{L}|$ & (R\$ M) & (R\$ M) & (\%) & Time (ms) \\
+\midrule
+1,024 & 16  & 24.71 & 2.60 & 10.51 & 72  \\
+1,024 & 32  & 24.35 & 2.60 & 10.68 & 159 \\
+1,024 & 64  & 24.06 & 2.61 & 10.86 & 327 \\
+1,024 & 128 & 23.99 & 2.60 & 10.83 & 657 \\
+\midrule
+4,096 & 16  & 24.64 & 1.53 & 6.19 & 74  \\
+4,096 & 32  & 24.29 & 1.58 & 6.50 & 167 \\
+4,096 & 64  & 24.08 & 1.53 & 6.37 & 353 \\
+4,096 & 128 & 23.97 & 1.51 & 6.28 & 656 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Out-of-Sample Tree Stability and Paired Kaut--Wallace Check}
+Following Kaut and Wallace~\cite{KautWallace2007}, we fix the root-stage decisions ($t=0$) produced by each of the 10 128-leaf trees and evaluate optimal multistage recourse ($t \ge 1$) on an independent high-resolution reference tree built from $N = 16,384$ Monte Carlo paths (seed 99999, $\mathrm{FO}_{\text{ref}}(\text{ME-R}) = \text{R\$}\,23.78\,\text{M}$, $\mathrm{FO}_{\text{ref}}(\text{ME}) = \text{R\$}\,23.33\,\text{M}$ at $\lambda = 0.50$). As reported in Table~\ref{tab:supp_kw}, out-of-sample dispersion across 10 seeds drops to $\text{CV} = 1.37\%$ ($N=1,024$, optimality gap $3.01\%$) and $2.43\%$ ($N=4,096$, gap $3.32\%$). Evaluating the paired difference $\text{ME-R} - \text{ME}$ out-of-sample on the same $N = 16,384$ reference tree confirms that the resale premium is not an artifact of finite-tree overfitting: on the reference tree itself $\Delta\mathrm{FO}_{\text{ref}} = +\text{R\$}\,0.45\text{M}$ ($\Delta\mathrm{CVaR}_{\text{ref}} = +\text{R\$}\,1.00\text{M}$), and across the 10 root policies evaluated on $N=16,384$, $\Delta\mathrm{FO}_{\text{OOS}} = +1.37 \pm 0.74\,\text{M}$ (95\% $t$-CI $[+0.84, +1.90]\,\text{M}$, positive in 10/10 seeds) with $\Delta\mathrm{CVaR}_{\text{OOS}} = +2.86 \pm 1.46\,\text{M}$ (CI $[+1.82, +3.91]\,\text{M}$).
+
+\begin{table}[htbp]
+\centering
+\caption{Kaut--Wallace Out-of-Sample Root-Decision Stability on $N=16,384$ Reference Tree ($\mathrm{FO}_{\text{ref}} = 23.78\,\text{M}$, $\lambda=0.50$).}
+\label{tab:supp_kw}
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{cccccc}
+\toprule
+Pool Size & Mean OOS & SD & CV & Range & Mean Gap \\
+$N$ & (R\$ M) & (R\$ M) & (\%) & (Min--Max, R\$ M) & vs.\ Ref (\%) \\
+\midrule
+1,024 & 23.06 & 0.32 & 1.37 & 22.62--23.66 & 3.01 \\
+4,096 & 22.98 & 0.56 & 2.43 & 22.26--23.69 & 3.32 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Joint $(\text{PLD}_{\text{SE}}, \text{PLD}_{\text{NE}}, \theta)$ vs.\ SE-Only Branching Dispersion}
+Table~\ref{tab:supp_branching} compares 10-seed 128-leaf trees ($\lambda=0.50$, $\rho=0$) under SE-only PCA bisection versus the joint standardized $(\text{PLD}_{\text{SE}}, \text{PLD}_{\text{NE}}, \theta)$ bisection adopted in the baseline. Branching only on $\text{PLD}_{\text{SE}}$ averages out uncorrelated demand churn inside each node (mean leaf $\text{SD}(\theta) = 0.0450$, $\text{IQR}(\theta) = 0.0613$), muting resale value ($\Delta\mathrm{FO} = +0.28\text{M}$, $\Delta\mathrm{CVaR} = +0.58\text{M}$). Joint bisection preserves 2.34 times higher demand SD ($0.1053$) and 3.17 times higher IQR ($0.1944$) across terminal leaves at comparable SE price dispersion, tripling realized resale value ($\Delta\mathrm{FO} = +0.92\text{M}$, $\Delta\mathrm{CVaR} = +1.96\text{M}$).
+
+\begin{table}[htbp]
+\centering
+\caption{10-Seed Terminal-Leaf Demand Dispersion and Resale Value Under SE-Only vs.\ Joint PCA Branching ($\lambda = 0.50$, 128 Leaves).}
+\label{tab:supp_branching}
+\scriptsize
+\setlength{\tabcolsep}{2.4pt}
+\begin{tabular}{lccccc}
+\toprule
+Branching & Mean Leaf & Mean Leaf & Mean Leaf & $\Delta\mathrm{FO}$ & $\Delta\mathrm{CVaR}$ \\
+Criterion & $\text{SD}(\theta)$ & $\text{IQR}(\theta)$ & $\text{SD}(\text{PLD}_{\text{SE}})$ & (R\$ M) & (R\$ M) \\
+\midrule
+SE PLD Only & 0.0450 & 0.0613 & 89.25 & +0.28 & +0.58 \\
+Joint $(\text{SE}, \text{NE}, \theta)$ & 0.1053 & 0.1944 & 79.20 & +0.92 & +1.96 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Complete In-Sample Results and LP Dimensions}
+\label{sec:supp_insample}
+
+Tables~\ref{tab:supp_full7} and~\ref{tab:supp_paired} present the complete seven-point grid $\lambda \in \{0.00, 0.10, 0.30, 0.50, 0.70, 0.90, 0.95\}$ for the illustrative Seed-2026 tree (including the two-stage Mean--CVaR benchmark 2S) and the 10-seed paired differences (in both R\$ M and R\$/MWh), while Table~\ref{tab:supp_dims} documents the baseline 128-leaf LP dimensions and solver metrics.
+
+\begin{table*}[htbp]
+\centering
+\caption{Complete In-Sample Optimization Results on Illustrative Seed-2026 Tree (Millions of R\$, $P^{\text{cli}} = \text{R\$}\,160/\text{MWh}$, 128 Leaves).}
+\label{tab:supp_full7}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{cccccccccccccc}
+\toprule
+ & \multicolumn{3}{c}{ME-R (With Resale)} & \multicolumn{3}{c}{ME (Buy-and-Hold)} & \multicolumn{3}{c}{2S (Two-Stage)} & \multicolumn{2}{c}{HEUR (95\%)} & \multicolumn{2}{c}{Resale Gain} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-12} \cmidrule(lr){13-14}
+$\lambda$ & $\mathbb{E}[R]$ & $\mathrm{CVaR}_{0.05}^{\mathrm{profit}}$ & FO & $\mathbb{E}[R]$ & $\mathrm{CVaR}_{0.05}^{\mathrm{profit}}$ & FO & $\mathbb{E}[R]$ & $\mathrm{CVaR}_{0.05}^{\mathrm{profit}}$ & FO & $\mathbb{E}[R]$ / CVaR & FO & $\Delta \mathrm{CVaR}$ & $\Delta \mathrm{FO}$ \\
+\midrule
+0.00 & 27.49 & $-90.04$ & 27.49 & 27.49 & $-90.04$ & 27.49 & 27.49 & $-90.04$ & 27.49 & 26.20 / 10.52 & 26.20 & 0.00  & 0.00  \\
+0.10 & 26.72 & 24.45    & 26.49 & 26.74 & 22.97    & 26.36 & 26.78 & 17.63    & 25.86 & 26.20 / 10.52 & 24.63 & +1.47 & +0.13 \\
+0.30 & 26.63 & 24.99    & 26.14 & 26.60 & 23.50    & 25.67 & 26.76 & 17.69    & 24.04 & 26.20 / 10.52 & 21.49 & +1.50 & +0.47 \\
+0.50 & 26.62 & 25.01    & 25.82 & 26.58 & 23.53    & 25.06 & 26.76 & 17.70    & 22.23 & 26.20 / 10.52 & 18.36 & +1.48 & +0.76 \\
+0.70 & 26.62 & 25.01    & 25.49 & 26.58 & 23.54    & 24.45 & 26.75 & 17.71    & 20.42 & 26.20 / 10.52 & 15.22 & +1.48 & +1.05 \\
+0.90 & 26.60 & 25.02    & 25.17 & 26.58 & 23.54    & 23.84 & 26.75 & 17.71    & 18.61 & 26.20 / 10.52 & 12.09 & +1.48 & +1.33 \\
+0.95 & 26.60 & 25.02    & 25.10 & 26.57 & 23.54    & 23.69 & 26.75 & 17.71    & 18.16 & 26.20 / 10.52 & 11.30 & +1.48 & +1.41 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[htbp]
+\centering
+\caption{Complete 10-Seed Paired In-Sample Differences ($\text{ME-R} - \text{ME}$, 128 Leaves, 95\% Student-$t$ CI).}
+\label{tab:supp_paired}
+\scriptsize
+\setlength{\tabcolsep}{1.2pt}
+\begin{tabular}{cccccc}
+\toprule
+$\lambda$ & $\Delta \mathrm{FO}$ & $\Delta \mathrm{FO}$ & 95\% $t$-CI & $\Delta \mathrm{CVaR}_{0.05}^{\mathrm{profit}}$ & 95\% $t$-CI \\
+ & (R\$ M) & (R\$/MWh) & ($\Delta \mathrm{FO}$) & (R\$ M) & ($\Delta \mathrm{CVaR}$) \\
+\midrule
+0.00 & $+0.00 \pm 0.00$ & $+0.00$ & $[0.00, 0.00]$ & $+0.00 \pm 0.00$ & $[0.00, 0.00]$ \\
+0.10 & $+0.12 \pm 0.06$ & $+0.09$ & $[0.07, 0.16]$ & $+1.57 \pm 0.66$ & $[1.10, 2.05]$ \\
+0.30 & $+0.50 \pm 0.20$ & $+0.41$ & $[0.36, 0.64]$ & $+1.96 \pm 0.78$ & $[1.39, 2.52]$ \\
+0.50 & $+0.92 \pm 0.36$ & $+0.75$ & $[0.66, 1.17]$ & $+1.96 \pm 0.77$ & $[1.41, 2.51]$ \\
+0.70 & $+1.34 \pm 0.51$ & $+1.09$ & $[0.97, 1.71]$ & $+1.97 \pm 0.75$ & $[1.43, 2.51]$ \\
+0.90 & $+1.76 \pm 0.67$ & $+1.44$ & $[1.28, 2.24]$ & $+1.97 \pm 0.75$ & $[1.43, 2.51]$ \\
+0.95 & $+1.87 \pm 0.71$ & $+1.52$ & $[1.36, 2.38]$ & $+1.97 \pm 0.75$ & $[1.43, 2.51]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Problem Dimensions and Solver Performance (8-Quarter Horizon, 128 Leaves).}
+\label{tab:supp_dims}
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Decision Stages ($T$) & 8 quarters (24 months) \\
+Scenario Tree Nodes ($|\mathcal{N}|$) & 255 nodes \\
+Scenario Leaves ($|\mathcal{L}|$) & 128 scenarios \\
+Continuous Decision Variables & 10,477 \\
+Linear Equalities and Inequalities & 7,676 \\
+Matrix Sparsity Density & 0.065\% \\
+Mean HiGHS 1.16 Solve Time (10 Seeds) & 657 ms \\
+Peak Memory Usage & 52.4 MB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Tariff Sensitivity, BBCE Depth, Extensions, and Risk Premia}
+\label{sec:supp_ext}
+
+\subsection{Retail Tariff Calibration Sensitivity}
+Table~\ref{tab:supp_tarifa} varies $P^{\text{cli}} \in \{150, 160, 180, 260\}\,\text{R\$/MWh}$ at $\lambda = 0.50$. Because retail tariff enters linearly as $(P^{\text{cli}} - \tau_{\text{reg}}) D_{\nu,s,m}$, the absolute resale gain $\Delta\mathrm{FO}$ stays between $\text{R\$}\,0.76\text{M}$ and $\text{R\$}\,1.05\text{M}$ ($\text{R\$}\,0.62$--$0.86/\text{MWh}$), whereas as a share of portfolio objective it scales from $0.72\%$ at $P^{\text{cli}} = \text{R\$}\,260/\text{MWh}$ to $3.03\%$ at $\text{R\$}\,160/\text{MWh}$ and $6.76\%$ at $\text{R\$}\,150/\text{MWh}$.
+
+\begin{table}[htbp]
+\centering
+\caption{Retail Tariff Margin Sensitivity ($\lambda = 0.50$, Seed 2026).}
+\label{tab:supp_tarifa}
+\scriptsize
+\setlength{\tabcolsep}{2.4pt}
+\begin{tabular}{cccccc}
+\toprule
+$P^{\text{cli}}$ & ME-R FO & ME FO & $\Delta\mathrm{FO}$ & $\Delta\mathrm{FO}$ & $\Delta\mathrm{FO}$ \\
+(R\$/MWh) & (R\$ M) & (R\$ M) & (R\$ M) & (R\$/MWh) & (\% of ME FO) \\
+\midrule
+150 & 13.62 & 12.76 & +0.86 & +0.70 & 6.76 \\
+160 & 25.82 & 25.06 & +0.76 & +0.62 & 3.03 \\
+180 & 50.10 & 49.30 & +0.80 & +0.65 & 1.61 \\
+260 & 146.95 & 145.89 & +1.05 & +0.86 & 0.72 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Empirical BBCE 2023 Forward Liquidity Depth}
+Table~\ref{tab:supp_bbce} summarizes empirical 2023 BBCE monthly and quarterly forward volumes across delivery lags ($0$ = prompt month/quarter, $-L$ = delivery $L$ months ahead). Prompt monthly liquidity concentrates in $M_0$--$M_{-2}$ ($348.4$--$3,740.9\,\text{MWmed}$), whereas at forward horizons $L \ge 6$ months quarterly blocks carry $3.6$--$9.4$ times larger traded capacity ($267.3$--$306.8\,\text{MWmed}$ vs.\ $28.4$--$85.2\,\text{MWmed}$), supporting narrower relative half-spreads for multi-month standardized blocks ($\eta_S = 0.6 < \eta_T = 0.8 < \eta_M = 1.0$) beyond the excluded front quarter.
+
+\begin{table}[htbp]
+\centering
+\caption{Empirical BBCE 2023 Mean Traded Volume by Delivery Lag (MWmed).}
+\label{tab:supp_bbce}
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{ccccccc}
+\toprule
+Lag (mo.) & 0 & $-1$ & $-2$ & $-3$ & $-6$ & $-9$ \\
+\midrule
+Monthly   & 3,740.9 & 649.6 & 348.4 & 216.3 & 85.2  & 28.4 \\
+Quarterly & 157.1   & 176.2 & 198.4 & 188.2 & 306.8 & 267.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Intra-Month Hourly Load-Capture Modulation}
+Using the 26,280-hour training (2021--2023) and 17,544-hour test (2024--2025) CCEE spot series together with stylized 24-hour load archetypes (because CCEE restricts automated download of class-metered retail consumption), Table~\ref{tab:supp_mod} reports the empirical capture ratios $\gamma_{s,m}$, in-sample reoptimization gains, and 2024--2025 ex-post pass-through impacts.
+
+\begin{table}[htbp]
+\centering
+\caption{Extension 1: Intra-Month Hourly Load-Profile Capture Factor $\gamma_{s,m}$ Against Flat Forwards ($\lambda = 0.50$, ME-R, $P^{\text{cli}} = \text{R\$}\,160/\text{MWh}$).}
+\label{tab:supp_mod}
+\scriptsize
+\setlength{\tabcolsep}{1.6pt}
+\begin{tabular}{lccccc}
+\toprule
+Load & $\bar{\gamma}_{\text{SE}}$ & $\bar{\gamma}_{\text{SE}} / \bar{\gamma}_{\text{NE}}$ & In-Sample & Reopt. & Ex-Post Test \\
+Profile & (Tr.) & (Test) & FO & Gain & 24--25 $\Delta$ \\
+\midrule
+Flat (Base)  & 1.0000 & 1.0000 / 1.0000 & 25.82M & 0.00M & 0.00M \\
+Industrial   & 1.0033 & 0.9762 / 0.9717 & 25.46M & +0.10M & +7.42M \\
+Commercial   & 1.0060 & 0.9693 / 0.9683 & 25.09M & +0.22M & +9.21M \\
+Residential  & 1.0132 & 1.0342 / 1.0303 & 24.16M & +0.54M & $-8.11\text{M}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cross-Submarket Contracting ($\text{NE}\to\text{SE}$) and Monthly FTR Proof-of-Concept}
+In the cross-submarket extension, a cross-submarket position $q^{\text{cross}}_{\nu,n} \ge 0$ satisfies $q_{\nu,\text{SE},n} + q^{\text{cross}}_{\nu,n} \le \kappa D^{\max}_{\text{SE},n}$ and adds $+q^{\text{cross}}_{\nu,m}$ to the NE spot balance (settling at $\text{PLD}_{\nu,\text{NE},m}$ while SE load settles at $\text{PLD}_{\nu,\text{SE},m}$). An optional monthly FTR $0 \le q^{\text{FTR}}_{\nu,n} \le q^{\text{cross}}_{\nu,n}$ settles on $\max(0, \text{PLD}_{\nu,\text{SE},m} - \text{PLD}_{\nu,\text{NE},m})$ and is priced node-conditionally at $\mathbb{E}[\max(0, \text{PLD}_{\text{SE},n} - \text{PLD}_{\text{NE},n}) \mid \nu] + c_{\text{FTR}}$. As shown in Table~\ref{tab:supp_ftr}, without FTRs optimal cross-submarket volume stays near zero ($0.24\,\text{GWh}$); at $c_{\text{FTR}} = 0$, a near-indifferent vertex swap ($650.36\,\text{GWh}$ cross backed by $526.84\,\text{GWh}$ FTR) lifts $\mathrm{FO}$ by only $\text{R\$}\,0.007\text{M}$ ($+0.026\%$) and reverts for any fee $c_{\text{FTR}} \ge \text{R\$}\,1.00/\text{MWh}$.
+
+\begin{table}[htbp]
+\centering
+\caption{Extension 2: Cross-Submarket Contracting ($\text{NE}\to\text{SE}$) and Monthly FTR Proof-of-Concept ($\lambda = 0.50$, ME-R).}
+\label{tab:supp_ftr}
+\scriptsize
+\setlength{\tabcolsep}{1.8pt}
+\begin{tabular}{lccccc}
+\toprule
+Configuration & $c_{\text{FTR}}$ & $\mathrm{FO}$ & $\mathrm{CVaR}_{0.05}^{\mathrm{profit}}$ & SE Direct & Cross $\text{NE}\!\to\!\text{SE}$ \\
+ & (R\$/MWh) & (R\$ M) & (R\$ M) & (GWh) & (GWh / FTR) \\
+\midrule
+No Cross (Base) & --  & 25.816 & 25.012 & 687.75 & 0.00 / 0.00 \\
+Cross, No FTR   & --  & 25.816 & 25.012 & 687.57 & 0.24 / 0.00 \\
+Cross + Fair FTR & 0.0 & 25.823 & 25.014 & 47.47 & 650.36 / 526.84 \\
+Cross + FTR Fee  & 1.0 & 25.816 & 25.012 & 687.57 & 0.18 / 0.00 \\
+Cross + FTR Fee  & 5.0 & 25.816 & 25.012 & 687.57 & 0.18 / 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Complete Risk-Premium Term-Structure Comparison}
+Table~\ref{tab:supp_premio} compiles all 18 combinations of risk aversion ($\lambda \in \{0.0, 0.5\}$), risk-premium level ($\psi_0 \in [-10\%, +10\%]$), and term structure (constant vs.\ maturity-decaying $\psi_0 \tau_{\nu,k,p}$), showing both the $\lambda=0$ timing degeneracy at $q_0^{\text{SE}} = 8.04\,\text{MWmed}$ under constant $\psi_0 < 0$ and the decomposition of $\Delta\mathrm{FO}$ under $\psi_0 > 0$.
+
+\begin{table}[htbp]
+\centering
+\caption{Complete Sensitivity to Constant vs.\ Maturity-Decaying Forward Risk Premia (Millions of R\$, $P^{\text{cli}} = \text{R\$}\,160/\text{MWh}$).}
+\label{tab:supp_premio}
+\scriptsize
+\setlength{\tabcolsep}{1.8pt}
+\begin{tabular}{cccccccc}
+\toprule
+$\psi_0$ & Term & $\lambda$ & FO & FO & FO & $\Delta\mathrm{FO}$ & $q_0^{\text{SE}}$ \\
+ & Struct. & & (ME-R) & (ME) & (HEUR) & (ME-R$-$ME) & (ME-R) \\
+\midrule
+$-10\%$ & Const. & 0.0 & 42.55 & 42.55 & 39.25 & 0.00 & 8.04 \\
+$-5\%$  & Const. & 0.0 & 34.53 & 34.53 & 32.73 & 0.00 & 8.04 \\
+$0\%$   & --     & 0.0 & 27.49 & 27.49 & 26.20 & 0.00 & 0.00 \\
+$+5\%$  & Const. & 0.0 & 27.49 & 27.49 & 19.67 & 0.00 & 0.00 \\
+$+10\%$ & Const. & 0.0 & 27.49 & 27.49 & 13.15 & 0.00 & 0.00 \\
+\midrule
+$-10\%$ & Decay  & 0.0 & 35.24 & 35.24 & 32.97 & 0.00 & 53.28 \\
+$-5\%$  & Decay  & 0.0 & 30.92 & 30.92 & 29.58 & 0.00 & 50.61 \\
+$+5\%$  & Decay  & 0.0 & 27.49 & 27.49 & 22.82 & 0.00 & 0.00 \\
+$+10\%$ & Decay  & 0.0 & 27.49 & 27.49 & 19.43 & 0.00 & 0.00 \\
+\midrule
+$-10\%$ & Const. & 0.5 & 41.27 & 40.58 & 31.41 & +0.69 & 41.40 \\
+$-5\%$  & Const. & 0.5 & 33.40 & 32.69 & 24.88 & +0.71 & 42.28 \\
+$0\%$   & --     & 0.5 & 25.82 & 25.06 & 18.36 & +0.76 & 48.10 \\
+$+5\%$  & Const. & 0.5 & 23.50 & 19.16 & 11.83 & +4.35 & 46.04 \\
+$+10\%$ & Const. & 0.5 & 22.45 & 13.56 & 5.31  & +8.89 & 47.92 \\
+\midrule
+$-10\%$ & Decay  & 0.5 & 33.31 & 32.31 & 25.13 & +1.00 & 43.23 \\
+$-5\%$  & Decay  & 0.5 & 29.48 & 28.59 & 21.74 & +0.89 & 39.87 \\
+$+5\%$  & Decay  & 0.5 & 23.37 & 22.09 & 14.97 & +1.29 & 23.67 \\
+$+10\%$ & Decay  & 0.5 & 21.53 & 19.20 & 11.59 & +2.33 & 26.37 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}
